@@ -1,0 +1,15 @@
+[
+    {"model": "category", "pk": 1, "fields": {"name": "бытовая химия"}},
+    {"model": "category", "pk": 2, "fields": {"name": "молочные продукты"}},
+    {"model": "category", "pk": 3, "fields": {"name": "бакалея"}},
+    {"model": "category", "pk": 4, "fields": {"name": "овощи"}},
+    {"model": "product", "pk": 1, "fields": {"name": "хлеб", "unit": "шт", "category_id":3}},
+    {"model": "product", "pk": 2, "fields": {"name": "молоко", "unit": "л", "category_id":2}},
+    {"model": "product", "pk": 3, "fields": {"name": "масло растительное", "unit": "л", "category_id":3}},
+    {"model": "product", "pk": 4, "fields": {"name": "масло сливочное", "unit": "шт", "category_id":2}},
+    {"model": "product", "pk": 5, "fields": {"name": "картофель", "unit": "кг", "category_id":4}},
+    {"model": "product", "pk": 6, "fields": {"name": "мыло", "unit": "шт", "category_id":1}},
+    {"model": "shopping_list_week", "pk": 1, "fields": {"product_id": 1, "amount": 2}},
+    {"model": "shopping_list_week", "pk": 2, "fields": {"product_id": 2, "amount": 1 }},
+    {"model": "shopping_list_week", "pk": 3, "fields": {"product_id": 5, "amount": 3}}
+  ]
