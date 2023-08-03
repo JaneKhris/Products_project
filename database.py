@@ -52,7 +52,7 @@ class Purchased_product(Base):
     amount = sq.Column(sq.Numeric)
     date = sq.Column(sq.Date)
 
-    product = relationship(Product, backref="purchased", cascade='all')
+    product = relationship(Product, backref="purchased")
 
 
 def create_tables(engine):
@@ -73,7 +73,9 @@ def db_filling(ses): # заполнение базы тестовыми данн
             'product': Product,
             'shopping_list_week': Shopping_list_week,
         }[record.get('model')]       
-        ses.add(model(id=record.get('pk'), **record.get('fields')))
+        # ses.add(model(id=record.get('pk'), **record.get('fields')))
+        ses.add(model(**record.get('fields')))
+
     ses.commit()
 
 def category_list(ses):
@@ -104,8 +106,9 @@ def shopping_list_view(ses):
 
 def purchased_product_list(ses):
     print('Список купленных товаров:')
-    for prod in ses.query(Purchased_product).all():
-        print(f' {prod.id} - {prod.name} ({prod.unit})')
+    for prod in ses.query(Product).join(Purchased_product.product).all():
+        for pr in prod.purchased:
+            print(f' {prod.name} {pr.amount} {prod.unit} /{pr.date}')
 
 def create_shopping_list(ses): 
     ses.query(Shopping_list).delete()
@@ -135,21 +138,74 @@ def shopping_list_done(ses): # перенос позиций в купленны
     q = ses.query(Shopping_list)
     for product in q.all():   
         ses.add(Purchased_product(product_id = product.product_id, amount = product.amount, date = date.today()))
+    print('Все позиции перенесены в список купленнных товаров')
     clear_shopping_list(ses)
     ses.commit()
 
-def add_product_full(ses): # добавление продукта
+def add_product(ses): # добавление продукта
     name = input('Введите наименование продукта: ')
     unit = input('Введите идиницы измерения продукта: ')
     category_list(ses)
     category = int(input('Введите категорию продукта: '))
-    id = len(ses.query(Product).all())+1
-    ses.add(Product(id=id, name=name, unit=unit, category_id=category))
+    # id = len(ses.query(Product).all())+1
+    ses.add(Product(name=name, unit=unit, category_id=category))
     ses.commit()
+
+def add_category(ses):
+    name = input('Введите название категории: ')
+    ses.add(Category(name=name))
+    ses.commit()
+
+def add_shopping_list_week(ses):
+    product = input('Введите id продукта: ')
+    amount = input('Введите количество продукта: ')
+    ses.add(Shopping_list_week(product_id=product, amount=amount))
+    ses.commit()
+
+def del_shopping_list_week(ses):
+    shopping_list_week_view(ses)
+    while True:
+        name = input('Введите наименование продукта, который нужно удалить из списка: ')
+        subq = ses.query(Product).filter(Product.name.like(f'%{name}%')).subquery('sub')
+        q = ses.query(subq).join(Shopping_list_week, Shopping_list_week.product_id == subq.c.id)
+        count = 0
+        for pr in q:
+            print(f'{pr.name} - id {pr.id}')
+            count += 1
+        if count==0:
+            choice = input('Совпадений в списке покупок не найдено. Чтобы повторить ввод нажмите введите "y"')
+            if choice != 'y':
+                break
+        else:
+            id = input('Введите id товара, который нужно удалить: ')
+            ses.query(Shopping_list_week).filter(Shopping_list_week.product_id == id).delete()
+            ses.commit()
+            break
+
+def update_shopping_list_week(ses):
+    shopping_list_week_view(ses)
+    while True:
+        name = input('Введите наименование продукта, количеество которого нужно изменить: ')
+        subq = ses.query(Product).filter(Product.name.like(f'%{name}%')).subquery('sub')
+        q = ses.query(subq).join(Shopping_list_week, Shopping_list_week.product_id == subq.c.id)
+        count = 0
+        for pr in q:
+            print(f'{pr.name} - id {pr.id}')
+            count += 1
+        if count==0:
+            choice = input('Совпадений в списке покупок не найдено. Чтобы повторить ввод нажмите введите "y"')
+            if choice != 'y':
+                break
+        else:
+            id = input('Введите id товара: ')
+            amount = input('Введите необходимое количество товара: ')
+            ses.query(Shopping_list_week).filter(Shopping_list_week.product_id == id).update({'amount':amount})
+            ses.commit()
+            break
 
 def check_products(ses): #проверка продуктов по всему списку и формирование списка покупок
     clear_shopping_list(ses)
-    for product in ses.query(Product):
+    for product in ses.query(Product).all():
         label = 'y'
         while label == 'y':
             label = input(f'{product.name} есть в наличии? (y/n) ')
@@ -162,6 +218,44 @@ def check_products(ses): #проверка продуктов по всему с
             else:
                 break
     ses.commit()
+
+def check_shopping_list_week(ses): #проверка продуктов по списку на неделю и формирование списка покупок
+    clear_shopping_list(ses)
+    for product in ses.query(Product).join(Shopping_list_week.product).all(): 
+        for pr in product.list_week:
+            label = 'y'
+            while label == 'y':
+                label = input(f'{product.name} есть в наличии? (y/n) ')
+                if label == 'n':
+                    amount = pr.amount
+                    ses.add(Shopping_list(product_id=product.id, amount=amount))
+                elif label !='y':
+                    print('Ошибка ввода')
+                    label = 'y'
+                else:
+                    break
+    ses.commit()
+
+def check_category(ses): #проверка продуктов по категориям
+    clear_shopping_list(ses)
+    category_list(ses)
+    category = input('Введите id выбранной категории: ')
+    subq = ses.query(Category).filter(Category.id==category).subquery('sub')
+    for product in ses.query(Product).join(subq, subq.c.id == Product.category_id):
+        # for pr in product.category:
+        label = 'y'
+        while label == 'y':
+            label = input(f'{product.name} есть в наличии? (y/n) ')
+            if label == 'n':
+                amount = float(input(f'Сколько {product.unit} нужно купить? '))
+                ses.add(Shopping_list(product_id=product.id, amount=amount))
+            elif label !='y':
+                print('Ошибка ввода')
+                label = 'y'
+            else:
+                break
+    ses.commit()
+
 
 
 
