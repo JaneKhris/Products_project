@@ -10,7 +10,7 @@ Base = declarative_base()
 
 class Category(Base):
     __tablename__ = "category"
-    id = sq.Column(sq.Integer, primary_key=True)
+    id = sq.Column(sq.Integer, primary_key=True, autoincrement=True)
     name = sq.Column(sq.String(length=40), unique=True)
 
     def __str__(self):
@@ -26,13 +26,14 @@ class Product(Base):
     category = relationship(Category, backref="products")
 
     def __str__(self):
-        return f'{self.name} ({self.unit})'
+        return f'{self.name} ({self.unit}) '
 
 class Shop(Base):
     __tablename__ = "shop"
-    id = sq.Column(sq.Integer, primary_key=True)
+    id = sq.Column(sq.Integer, primary_key=True, autoincrement=True)
     name =  sq.Column(sq.String(length=40), unique=True)
     adress = sq.Column(sq.String(length=150),nullable=True)
+    comment = sq.Column(sq.String(length=150),nullable=True)
 
     def __str___(self):
         return f'{self.id}: {self.name} по адресу {self.adress}'
@@ -42,6 +43,7 @@ class Sl_template(Base):
     id = sq.Column(sq.Integer, primary_key=True)
     name =  sq.Column(sq.String(length=40), unique=True)
     comment = sq.Column(sq.String(length=150),nullable=True)
+    archive = sq.Column(sq.Boolean, nullable=False)
 
     def __str__(self):
         return f'{self.id}: {self.name}'
@@ -72,7 +74,7 @@ class Product_Shop(Base):
     id = sq.Column(sq.Integer, primary_key=True, autoincrement=True)
     shop_id = sq.Column(sq.Integer, sq.ForeignKey("shop.id"), nullable=False)
     product_id = sq.Column(sq.Integer, sq.ForeignKey("product.id"), nullable=False)
-    price = sq.Column(sq.Numeric)
+    price = sq.Column(sq.String(length=8), nullable=True)
 
 class Purchased_product(Base):
     __tablename__ = "purchased_products"
@@ -82,4 +84,4 @@ class Purchased_product(Base):
     date = sq.Column(sq.Date)
     shop_id = sq.Column(sq.Integer, sq.ForeignKey("shop.id"))
     shopping_list_id = sq.Column(sq.Integer, sq.ForeignKey("shopping_list.id"), nullable=True)
-    price = sq.Column(sq.Numeric, nullable=True)
+    price = sq.Column(sq.String(length=8), nullable=True)
