@@ -14,13 +14,15 @@ if __name__ == "__main__":
     Session = sessionmaker(bind=engine)
     session = Session()
 
+    main_choice(session)
+
     # categories_list(session)
     # products_list(session)
     # shops_list(session)
     # add_product_shop_pos(session)
     # shop_products_list(session)
 
-    sl_template_product(session)
+    # sl_template_product(session)
     # shopping_list_product(session)
     # purchased_product(session)
     # add_shop(session)
