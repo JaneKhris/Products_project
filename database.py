@@ -60,7 +60,10 @@ class Shopping_list(Base):
     id = sq.Column(sq.Integer, primary_key=True)
     date =  sq.Column(sq.Date)
     comment = sq.Column(sq.String(length=150),nullable=True)
-    s_l_template = sq.Column(sq.Integer,sq.ForeignKey("sl_template.id"),nullable=True)
+    archive = sq.Column(sq.Boolean, nullable=False)
+
+
+    # s_l_template = sq.Column(sq.Integer,sq.ForeignKey("sl_template.id"),nullable=True)
 
 class Shopping_list_product(Base):
     __tablename__ = "shopping_list_product"
@@ -68,6 +71,7 @@ class Shopping_list_product(Base):
     shopping_list_id = sq.Column(sq.Integer, sq.ForeignKey("shopping_list.id"), nullable=False)
     product_id = sq.Column(sq.Integer, sq.ForeignKey("product.id"), nullable=False)
     amount = sq.Column(sq.Numeric, nullable=False)
+    sl_template_id = sq.Column(sq.Integer,sq.ForeignKey("sl_template.id"),nullable=True)
 
 class Product_Shop(Base):
     __tablename__ = 'product_shop'
@@ -83,5 +87,6 @@ class Purchased_product(Base):
     amount = sq.Column(sq.Numeric)
     date = sq.Column(sq.Date)
     shop_id = sq.Column(sq.Integer, sq.ForeignKey("shop.id"))
-    shopping_list_id = sq.Column(sq.Integer, sq.ForeignKey("shopping_list.id"), nullable=True)
+    # shopping_list_id = sq.Column(sq.Integer, sq.ForeignKey("shopping_list.id"), nullable=True)
     price = sq.Column(sq.String(length=8), nullable=True)
+    sl_template_id = sq.Column(sq.Integer,sq.ForeignKey("sl_template.id"),nullable=True)

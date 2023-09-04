@@ -1,6 +1,8 @@
 from database import *
 
 from random import randint
+from datetime import date
+
 from sqlalchemy import desc
 
 def create_tables(engine):
@@ -201,7 +203,58 @@ def create_sl_template(ses):
     print('Товары добавлены в шаблон')
     # return new_template
 
+def create_shopping_list_(ses):
+    date_ = date.today()
+    comment = input('Введите комментарий (необязательный параметр): ')
+    new_shopping_list = Shopping_list(date=date_,comment=comment)
+    ses.add(new_shopping_list)
+    ses.commit()
+    print('Создан список покупок')
+    return new_shopping_list
 
+def add_products_from_template(ses,shopping_list_id):
+    answer = 'y'
+    while answer == 'y':
+        templates_list(ses)
+        template = input('Введите id шаблона: ')
+        q = ses.query(Sl_template_pruduct).filter(Sl_template_pruduct.sl_template_id==template).all()
+        for pos in q:
+            new_pos_sl_product = Shopping_list_product(
+                shopping_list_id = shopping_list_id,
+                product_id = pos.product_id,
+                amount = pos.amount,
+                sl_template_id = template
+            )
+            ses.add(new_pos_sl_product)
+        print(f'!Предварительно! товары из шаблона {template} добавлены в список покупок')
+        answer = input('Хотите добавить в список покупок товары из другого шаблона?(y/n)')
+    ses.commit()
+
+def add_products_from_common_list(ses,shopping_list_id):
+    answer = 'y'
+    while answer == 'y':
+        products_list(ses)
+        product_id = input('Введите id продукта: ')
+        amount = input('Введите количество товара: ')
+        new_pos = Shopping_list_product(
+            shopping_list_id = shopping_list_id,
+            product_id = product_id,
+            amount = amount
+        )
+        ses.add(new_pos)
+        print(f'!Предварительно! Товар {product_id} добавлен в список покупок')
+        answer = input('Хотите добавить в список покупок еще товары?(y/n)')
+    ses.commit()
+
+def create_shopping_list(ses):
+    new_sl = create_shopping_list_(ses)
+    sl_id = new_sl.id
+    answer1 = input('Хотите добавить в список покупок товары из шаблона?(y/n)')
+    if answer1 == 'y':
+        add_products_from_template(ses,sl_id)
+    answer2 = input('Хотите добавить в список покупок товары из основного списка?(y/n)')
+    if answer2 == 'y':
+        add_products_from_common_list(ses,sl_id)
 
 choice_dict = {
     '01': categories_list,
@@ -216,9 +269,11 @@ choice_dict = {
     '10': add_product,
     '11': add_product_shop,
     '12': create_sl_template,
-    '13': add_products_in_template
+    '13': add_products_in_template,
+    '14': create_shopping_list
 
 }
+
 def main_choice(ses):
     while True:
         print('''
@@ -237,6 +292,7 @@ def main_choice(ses):
         - добавить товар в мвгвзин/магазин к товару (11)
         - создать шаблон (12)
         - добавить товар в существующий шаблон (13)
+        - создать список покупок (14)
 
         Для выхода введите "00"
         ''')
@@ -248,7 +304,6 @@ def main_choice(ses):
 # функции для тестового заполнение таблиц
 def add_product_shop_pos(ses):
     for i in range(30):
-
         ses.add(Product_Shop(product_id = randint(3,12),shop_id = randint(1,4), price = randint(0,100)))
     ses.commit()    
 
